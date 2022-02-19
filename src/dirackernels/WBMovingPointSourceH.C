@@ -34,7 +34,7 @@ validParams<WBMovingPointSourceH>()
   params.addParam<FunctionName>("y_coord_function", "y coordinate of the point as a function of time ");
   params.addParam<FunctionName>("z_coord_function", "z coordinate of the point as a function of time ");
   params.addParam<Real>("mass_flux",0.0,"The constant mass flow rate at this point (well bottom) in kg/s (positive is injection, negative is production)");
-  params.addParam<FunctionName>("mass_flux_function", "The mass flow rate as a function of time at this point (well bottom) in kg/s"
+  params.addParam<FunctionName>("mass_flux_function", "The mass flow rate as a function of time at the specified point in kg/s"
                                                       "(positive-valued function is injection, negative-valued function is production)");
   params.addParam<Real>("start_time", 0.0, "The time at which the source will start (the case of the constant flow rate)");
   params.addParam<Real>("end_time", 1.0e30, "The time at which the source will end (the case of the constant flow rate)");
@@ -60,7 +60,7 @@ WBMovingPointSourceH::WBMovingPointSourceH(
 }
 
 void
-WBMovingPointSourceH::addPoints()
+WBMovingPointSourceH::addPoints()  //add position　(XYZ) of the moving point
 {
     addPoint(Point(_x_function->value(_t, _point_zero), _y_function->value(_t, _point_zero), _z_function->value(_t, _point_zero)));
 }

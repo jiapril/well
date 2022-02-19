@@ -34,7 +34,7 @@ template <>
 InputParameters validParams<WBMovingPointSourceH>();
 
 /**
- * Point source (or sink) that adds (removes) fluid at a constant mass flux rate for times
+ * Moving Point source (or sink) that adds (removes) fluid at defined mass flux rate for times
  * between the specified start and end times. If no start and end times are specified,
  * the source (sink) starts at the start of the simulation and continues to act indefinitely
  */
@@ -47,7 +47,7 @@ public:
   virtual Real computeQpResidual() override;
 
 protected:
-
+  //x,y,z coordinate of the moving point source
   const Function * _x_function;
 
   const Function * _y_function;

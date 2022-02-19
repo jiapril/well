@@ -405,9 +405,7 @@
  /home/jiapril/projects/moose/framework/build/header_symlinks/TaggingInterface.h \
  /home/jiapril/projects/moose/framework/build/header_symlinks/Function.h \
  /home/jiapril/projects/Tiger/src/dirackernels/WBMovingPointSourceH.C \
- /home/jiapril/projects/Tiger/build/header_symlinks/WBMovingPointSourceH.h \
- /home/jiapril/projects/Tiger/src/dirackernels/WBPointHeatSource.C \
- /home/jiapril/projects/Tiger/build/header_symlinks/WBPointHeatSource.h
+ /home/jiapril/projects/Tiger/build/header_symlinks/WBMovingPointSourceH.h
 
 /home/jiapril/projects/Tiger/src/dirackernels/TigerHydraulicPointSourceH.C:
 
@@ -1220,7 +1218,3 @@
 /home/jiapril/projects/Tiger/src/dirackernels/WBMovingPointSourceH.C:
 
 /home/jiapril/projects/Tiger/build/header_symlinks/WBMovingPointSourceH.h:
-
-/home/jiapril/projects/Tiger/src/dirackernels/WBPointHeatSource.C:
-
-/home/jiapril/projects/Tiger/build/header_symlinks/WBPointHeatSource.h:
