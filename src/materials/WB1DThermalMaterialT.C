@@ -62,8 +62,8 @@ validParams<WB1DThermalMaterialT>()
   params.addParam<Real>("natural_convection_factor", 1.0, "Scale factor for heat transfer coefficient due to natural convection " 
   "under shut-in condition. The default 1.0 corresponds to when there is no natural convection and only conduction exisiting. "
   "Refer to Wang et.al 2019 for the reason of using this factor");
-  params.addParam<FunctionName>("fluid_remain_factor", 1.0, "The ratio of the remaining flow below the loss zone to the flow "
-  "above the loss zone");
+  params.addParam<FunctionName>("fluid_remain_factor", 1.0, "Designed for well where there is drilling loss such as RN15-IDDP2 well, "
+  "It means the ratio of the remaining flow below the loss zone to the flow above the loss zone");
   params.addParam<UserObjectName>("supg_uo", "",
         "The name of the userobject for SU/PG");
   params.addClassDescription("Thermal material for thermal kernels (ONLY for 1-D well in XYZ coordinate system)");

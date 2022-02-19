@@ -34,7 +34,7 @@ InputParameters
 validParams<WB2DThermalMaterialT>()
 {
   InputParameters params = validParams<Material>();
-  params.addRequiredParam<Real>("well_radius", "Well inner diamter (m)");
+  params.addRequiredParam<Real>("well_radius", "Well inner radius (m)");
   params.addRequiredParam<Real>("specific_heat",
         "Specific heat of rock matrix (J/(kg K))");
   params.addRequiredParam<Real>("density", "density of rock matrix (kg/m^3)");
@@ -46,13 +46,6 @@ validParams<WB2DThermalMaterialT>()
   params.addParam<MooseEnum>("advection_type", Advection,
         "Type of the velocity to simulate advection [pure_diffusion "
         "darcy_velocity user_velocity darcy_user_velocities velocity_three_component]");
-  MooseEnum CT("isotropic orthotropic anisotropic");
-  params.addRequiredParam<MooseEnum>("conductivity_type", CT,
-        "Thermal conductivity distribution type [isotropic, orthotropic, anisotropic]");
-  MooseEnum Mean("arithmetic geometric wellbore_specific", "wellbore_specific");
-  params.addParam<MooseEnum>("mean_calculation_type", Mean,
-        "Solid-liquid mixture thermal conductivity calculation method "
-        "[arithmetic, geometric,wellbore_specific]");
   MooseEnum Heat_transfer_direction
         ("x y","x");
   params.addParam<MooseEnum>("heat_transfer_direction", Heat_transfer_direction,
@@ -67,13 +60,15 @@ validParams<WB2DThermalMaterialT>()
   params.addParam<Real>("natural_convection_factor", 1.0, "scale factor for heat transfer coefficient under shut-in");
   params.addParam<FunctionName>("user_velocity", 0.0,
         "a vector function to define the velocity field");
-  params.addParam<FunctionName>("velocity_component_x", 0.0, "a scalar to define velocity_x as a function of time and space");
-  params.addParam<FunctionName>("velocity_component_y", 0.0, "a scalar to define velocity_y as a function of time and space");
-  params.addParam<FunctionName>("velocity_component_z", 0.0, "a scalar to define +velocity_z as a function of time and space");
-  params.addParam<FunctionName>("fluid_remain_factor", 1.0, "The ratio of the remaining fluid.");
+  params.addParam<FunctionName>("velocity_component_x", 0.0, "A scalar to define velocity_x as a function of time and space");
+  params.addParam<FunctionName>("velocity_component_y", 0.0, "A scalar to define velocity_y as a function of time and space");
+  params.addParam<FunctionName>("velocity_component_z", 0.0, "A scalar to define velocity_z as a function of time and space");
+  params.addParam<FunctionName>("fluid_remain_factor", 1.0, "Designed for well where there is drilling loss such as RN15-IDDP2 well,"
+  "It means the ratio of the remaining flow below the loss zone to the flow above the loss zone");
   params.addParam<UserObjectName>("supg_uo", "",
         "The name of the userobject for SU/PG");
-  params.addClassDescription("Thermal material for thermal kernels");
+  params.addClassDescription("Thermal material for thermal kernels. So far it's limited to two-dimensional borehole and two-dimensional "
+  "reservior system, but can be modified easily to three-dimensional system");
 
   return params;
 }
@@ -81,8 +76,6 @@ validParams<WB2DThermalMaterialT>()
 WB2DThermalMaterialT::WB2DThermalMaterialT(const InputParameters & parameters)
   : Material(parameters),
     _at(getParam<MooseEnum>("advection_type")),
-    _ct(getParam<MooseEnum>("conductivity_type")),
-    _mean(getParam<MooseEnum>("mean_calculation_type")),
     _heat_transfer_direction(getParam<MooseEnum>("heat_transfer_direction")),
     _lambda0(getParam<std::vector<Real>>("lambda")),
     _cp0(getParam<Real>("specific_heat")),
@@ -156,24 +149,23 @@ WB2DThermalMaterialT::computeQpProperties()
   _TimeKernelT[_qp] = rho_m * c_p_m;
   _dTimeKernelT_dT[_qp] = _n[_qp] * _drho_dT_f[_qp] * c_p_m;
   _dTimeKernelT_dp[_qp] = _n[_qp] * _drho_dp_f[_qp] * c_p_m;
-
-  switch (_mean)
-  {
-    case M::arithmetic:
-      _lambda_sf[_qp] = Ari_Cond_Calc(_n[_qp], _lambda_f[_qp], _lambda0, _current_elem->dim());
-      break;
-    case M::geometric:
-      _lambda_sf[_qp] = Geo_Cond_Calc(_n[_qp], _lambda_f[_qp], _lambda0, _current_elem->dim());
-      break;
-    case M::wellbore_specific:
-      _lambda_sf[_qp] = Wellbore_Specific(_n[_qp], _lambda_f[_qp], _lambda0, _current_elem->dim());
-      break;
-  }
+ 
+ _lambda_sf[_qp] = Borehole_Thermal_Conductivity(_n[_qp], _lambda_f[_qp], _lambda0, _current_elem->dim());
 
   if (_current_elem->dim() < _mesh.dimension())
     _lambda_sf[_qp].rotate(_rot_mat[_qp]);
 
-  switch (_at)
+/*
+Velocity in the well, but the use of it has strong limitations! 
+    o Only for the "velocity_three_compents type". This means: no hydraulic equations coupled here!
+    o Only for one-dimensional flow! This means: only one velocity component out of _vel_func_x, _vel_func_y,_vel_func_z is one-zero (this component
+      is in the direction of injection), the other two components are zero.
+    o That non-zero component (e.g. _vel_func_x) is the well flow velocity when there is no flow loss (e.g., velocity calculated at well-head)
+    o The velocity of the flow anywhere is defined as _vel_func_x * _fluid_remain_factor. Herein, the _fluid_remain_factor is a function that can
+      both depend on time and space. If no loss presents, _fluid_remain_factor should be 1.0.
+  The three velocity component is assigned separately because I would like to make each component a function of time and space.
+*/
+  switch (_at)  
   {
     case AT::pure_diffusion:
       _av[_qp].zero();
@@ -205,16 +197,15 @@ WB2DThermalMaterialT::computeQpProperties()
 
   _Re[_qp]= 2 * _av[_qp].norm() * _rho_f[_qp] * _well_radius/_mu_f[_qp];
 
-
+  //caculation of Nusselt number 
    if (_Re[_qp]>1e4)
-  //Dittus-Boelter correlation for turbulent flow
-     _Nu[_qp]=0.023*pow(_Re[_qp],0.8)*pow(_Pr[_qp],0.3);
-  else if (_av[_qp].norm()<1e-6 ||_Re[_qp]<1e-6)
-     _Nu[_qp]=2.0*_scale_factor_natural_convection;//2.8;
+     _Nu[_qp]=0.023*pow(_Re[_qp],0.8)*pow(_Pr[_qp],0.3);   //Dittus-Boelter correlation for turbulent flow
+  else if (_av[_qp].norm()<1e-6 ||_Re[_qp]<1e-6)           //shut-in condition
+     _Nu[_qp]=2.0*_scale_factor_natural_convection;
   else if (_Re[_qp]< 2300)
-     _Nu[_qp]=4.36;
+     _Nu[_qp]=4.36;                                        //laminar flow
   else
-     _Nu[_qp]=4.36+(_Re[_qp]-2300)*(36.45*pow(_Pr[_qp],0.3)-4.36)/7700;
+     _Nu[_qp]=4.36+(_Re[_qp]-2300)*(36.45*pow(_Pr[_qp],0.3)-4.36)/7700;     //linear interpolation between laminar and turbulent flow
 
    _h[_qp]= _Nu[_qp]*_lambda_f[_qp]/(2*_well_radius);
 
@@ -236,6 +227,16 @@ WB2DThermalMaterialT::computeQpProperties()
     _SUPG_ind[_qp] = false;
 }
 
+
+/*
+Velocity in the well, but the use of it has strong limitations! 
+    o Only for the "velocity_three_compents type". This means: no hydraulic equations coupled here!
+    o When applied, only one velocity component out of _vel_func_x, _vel_func_y,_vel_func_z is one-zero (this component
+      is in the direction of injection), the other two components are zero.
+    o That non-zero component (e.g. _vel_func_x) is the well flow velocity when there is no flow loss (e.g., velocity caculated at well-head)
+    o The velocity of the flow anywhere is defined as _vel_func_x * _fluid_remain_factor. Herein, the _fluid_remain_factor is a function that can
+      both depend on time and space. If no loss presents, _fluid_remain_factor should be 1.0.
+*/
 RankTwoTensor
 WB2DThermalMaterialT::Ari_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim)
 {
@@ -249,8 +250,11 @@ WB2DThermalMaterialT::Ari_Cond_Calc(Real const & n, Real const & lambda_f, const
 
 
   if (dim !=2)
-     mooseError("Only 2d elements can use type of material.\n");
-
+     mooseError("So far only 2d elements can use type of material.\n");
+     
+  
+  
+  
   else
   {
      switch (_ct)
@@ -274,45 +278,18 @@ WB2DThermalMaterialT::Ari_Cond_Calc(Real const & n, Real const & lambda_f, const
   return lambda;
 }
 
+
+/*
+The values for borehole thermal conductivity are assigned in two directions!
+This is essentially a trick that makes the thermal modeling in the borehole one-dimensional, despite that the
+mesh is two-dimensional. To do this, the thermal conductivity in the flow direction is the same as the thermal conductivity
+of the fluid. The "_heat_transfer_direction" is the direction of the lateral heat transfer, which is perpendicular to the
+flow direction. The user can decide this direction according to the coordinate of the mesh. The thermal conductivity in the direction of lateral 
+heat transfer needs to be given. This vaule should be large enough such that the temperature at the borehole cross section is homongenous.
+A figure to explain this idea is also given in folder "supplementary_figure".
+*/
 RankTwoTensor
-WB2DThermalMaterialT::Geo_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim)
-{
-  RankTwoTensor lambda = RankTwoTensor();
-  RealVectorValue lambda_x;
-  RealVectorValue lambda_y;
-  RealVectorValue lambda_z;
-  lambda_x.zero();
-  lambda_y.zero();
-  lambda_z.zero();
-
-  if (dim !=2)
-     mooseError("Only 2d elements can use type of material.\n");
-
-  else
-   { switch (_ct)
-     {
-       case CT::isotropic:
-          if (lambda_s.size() != 1)
-             mooseError("One input value is needed for isotropic distribution of thermal conductivity! You provided ", lambda_s.size(), " values.\n");
-          lambda = RankTwoTensor(1., 1., 0., 0., 0., 0.) * std::pow(lambda_f,n) * std::pow(lambda_s[0],(1.-n));
-          break;
-       case CT::orthotropic:
-          if (lambda_s.size() != 2)
-              mooseError("Two input values are needed for orthotropic distribution of thermal conductivity in two dimensional elements! You provided ", lambda_s.size(), " values.\n");
-          lambda  = RankTwoTensor(std::pow(lambda_s[0],(1.-n)), std::pow(lambda_s[1],(1.-n)), 0., 0., 0., 0.);
-          lambda *= std::pow(lambda_f,n);
-          break;
-       case CT::anisotropic:
-            mooseError("Geometric mean for thermal conductivity of mixture is not available in anisotropic distribution.\n");
-          break;
-     }
-   }
-
-  return lambda;
-}
-
-RankTwoTensor
-WB2DThermalMaterialT::Wellbore_Specific(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim)
+WB2DThermalMaterialT::Borehole_Thermal_Conductivity(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim)
 {
   RankTwoTensor lambda = RankTwoTensor();
   RealVectorValue lambda_x;
@@ -323,53 +300,24 @@ WB2DThermalMaterialT::Wellbore_Specific(Real const & n, Real const & lambda_f, c
   lambda_z.zero();
 
  if (dim !=2)
-     mooseError("Only 2d elements can use type of material.\n");
+     mooseError("Only two-dimensional elements can use type of material.\n");
 
   else
   {
     switch (_heat_transfer_direction)
     {
       case HTD::x:
-          switch (_ct)
-          {
-            case CT::isotropic:
-                if (lambda_s.size() != 1)
-                   mooseError("One input value is needed for isotropic distribution of thermal conductivity! You provided ", lambda_s.size(), " values.\n");
-                   lambda = (n * lambda_s[0] + (1.0 - n) * lambda_f) * RankTwoTensor(1., 0., 0., 0., 0., 0.);
-                   lambda = ((1.0 - n) * lambda_s[0] + n * lambda_f) * RankTwoTensor(0., 1., 0., 0., 0., 0.);
-                break;
-            case CT::orthotropic:
-                if (lambda_s.size() != 2)
-                   mooseError("Two input values are needed for orthotropic distribution of thermal conductivity in two dimensional elements! You provided ", lambda_s.size(), " values.\n");
-                   lambda  = (1.0 - n)    * RankTwoTensor(lambda_f, lambda_s[1], 0., 0., 0., 0.);
-                   lambda += n * RankTwoTensor(lambda_s[0]         , lambda_f         , 0., 0., 0., 0.);
-                break;
-            case CT::anisotropic:
-                   mooseError("This type of heat conductivity is not considered");
-                   break;
-          }
-
+          if (lambda_s.size() != 2)
+             mooseError("Two input values are needed for orthotropic distribution of thermal conductivity in two dimensional elements! You provided ", lambda_s.size(), " values.\n");
+             lambda  = (1.0 - n)    * RankTwoTensor(lambda_f, lambda_s[1], 0., 0., 0., 0.);
+             lambda += n * RankTwoTensor(lambda_s[0], lambda_f, 0., 0., 0., 0.);          
       break;
 
       case HTD::y:
-          switch (_ct)
-          {
-            case CT::isotropic:
-                if (lambda_s.size() != 1)
-                   mooseError("One input value is needed for isotropic distribution of thermal conductivity! You provided ", lambda_s.size(), " values.\n");
-                   lambda = (n * lambda_f + (1.0 - n) * lambda_s[0]) * RankTwoTensor(1., 0., 0., 0., 0., 0.);
-                   lambda = ((1.0 - n) * lambda_f + n * lambda_s[0]) * RankTwoTensor(0., 1., 0., 0., 0., 0.);
-                break;
-            case CT::orthotropic:
-                if (lambda_s.size() != 2)
-                   mooseError("Two input values are needed for orthotropic distribution of thermal conductivity in two dimensional elements! You provided ", lambda_s.size(), " values.\n");
-                   lambda  = (1.0 - n)    * RankTwoTensor(lambda_s[0], lambda_f, 0., 0., 0., 0.);
-                   lambda += n * RankTwoTensor(lambda_f         , lambda_s[1]         , 0., 0., 0., 0.);
-                break;
-            case CT::anisotropic:
-                   mooseError("This type of heat conductivity is not considered");
-                   break;
-          }
+          if (lambda_s.size() != 2)
+             mooseError("Two input values are needed for orthotropic distribution of thermal conductivity in two dimensional elements! You provided ", lambda_s.size(), " values.\n");
+             lambda  = (1.0 - n)    * RankTwoTensor(lambda_s[0], lambda_f, 0., 0., 0., 0.);
+             lambda += n * RankTwoTensor(lambda_f, lambda_s[1], 0., 0., 0., 0.);          
       break;
     }
    }

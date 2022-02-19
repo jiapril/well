@@ -39,21 +39,16 @@ private:
   // enum to select type of advection velocity
   enum AT {pure_diffusion, darcy_velocity, user_velocity, darcy_user_velocities,velocity_three_components};
   MooseEnum _at;
-  // enum to select thermal conductivity distribution for solid phase
-  enum CT {isotropic, orthotropic, anisotropic};
-  MooseEnum _ct;
-  // enum to select calculation method for mixture thermal conductivity
-  enum M {arithmetic, geometric, wellbore_specific};
-  MooseEnum _mean;
+  // enum to select the lateral heat transfer direction between the borehole and the surrounding solid structures
   enum HTD {x, y};
   MooseEnum _heat_transfer_direction;
-
   // initial thermal conductivity for solid phase
   std::vector<Real> _lambda0;
   // initial specific heat for solid phase
   Real _cp0;
   // initial density for solid phase
   Real _rho0;
+  //radis of the borehole
   Real _well_radius;
   // boolean selecting mode for upwinding and critical numbers output
   bool _has_PeCr;
@@ -64,16 +59,14 @@ private:
   Real _scale_factor_natural_convection;
   // userdefined velocity vector function for advection
   const Function * _vel_func;
-  // assign veloctiy components seperately
+  // assign veloctiy components seperately (to make EACH velocity component vary with time and space)
   const Function * _vel_func_x;
   const Function * _vel_func_y;
   const Function * _vel_func_z;
 
 protected:
   virtual void computeQpProperties() override;
-  RankTwoTensor Ari_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim);
-  RankTwoTensor Geo_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim);
-  RankTwoTensor Wellbore_Specific(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim);
+  RankTwoTensor Borehole_Thermal_Conductivity(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim);
 
   // Peclet number upon request
   MaterialProperty<Real> * _Pe;
