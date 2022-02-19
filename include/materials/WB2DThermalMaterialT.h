@@ -1,7 +1,6 @@
 /**************************************************************************/
-/*  TIGER - THMC sImulator for GEoscience Research                        */
+/*  TIGER - Hydro-thermal sImulator GEothermal Reservoirs                 */
 /*                                                                        */
-/*  Copyright (C) 2017 by Maziar Gholami Korzani                          */
 /*  Karlsruhe Institute of Technology, Institute of Applied Geosciences   */
 /*  Division of Geothermal Research                                       */
 /*                                                                        */
@@ -21,34 +20,33 @@
 /*  along with this program.  If not, see <http://www.gnu.org/licenses/>  */
 /**************************************************************************/
 
-#ifndef WB1DTHERMALMATERIALT_H
-#define WB1DTHERMALMATERIALT_H
+#ifndef WB2DTHERMALMATERIALT_H
+#define WB2DTHERMALMATERIALT_H
 
 #include "Material.h"
 #include "RankTwoTensor.h"
-#include "TigerSUPG.h"
-#include "Function.h"
 
-class WB1DThermalMaterialT;
+class WB2DThermalMaterialT;
 
 template <>
-InputParameters validParams<WB1DThermalMaterialT>();
+InputParameters validParams<WB2DThermalMaterialT>();
 
-class WB1DThermalMaterialT : public Material
+class WB2DThermalMaterialT : public Material
 {
 public:
-  WB1DThermalMaterialT(const InputParameters & parameters);
-
+  WB2DThermalMaterialT(const InputParameters & parameters);
 private:
   // enum to select type of advection velocity
-  enum AT {pure_diffusion, darcy_velocity, user_velocity, darcy_user_velocities};
+  enum AT {pure_diffusion, darcy_velocity, user_velocity, darcy_user_velocities,velocity_three_components};
   MooseEnum _at;
   // enum to select thermal conductivity distribution for solid phase
   enum CT {isotropic, orthotropic, anisotropic};
   MooseEnum _ct;
   // enum to select calculation method for mixture thermal conductivity
-  enum M {arithmetic, geometric};
+  enum M {arithmetic, geometric, wellbore_specific};
   MooseEnum _mean;
+  enum HTD {x, y};
+  MooseEnum _heat_transfer_direction;
 
   // initial thermal conductivity for solid phase
   std::vector<Real> _lambda0;
@@ -56,6 +54,7 @@ private:
   Real _cp0;
   // initial density for solid phase
   Real _rho0;
+  Real _well_radius;
   // boolean selecting mode for upwinding and critical numbers output
   bool _has_PeCr;
   bool _has_supg;
@@ -65,12 +64,17 @@ private:
   Real _scale_factor_natural_convection;
   // userdefined velocity vector function for advection
   const Function * _vel_func;
+  // assign veloctiy components seperately
+  const Function * _vel_func_x;
+  const Function * _vel_func_y;
+  const Function * _vel_func_z;
 
 protected:
   virtual void computeQpProperties() override;
   RankTwoTensor Ari_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim);
   RankTwoTensor Geo_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim);
-  Moose::CoordinateSystemType _coord_type;
+  RankTwoTensor Wellbore_Specific(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim);
+
   // Peclet number upon request
   MaterialProperty<Real> * _Pe;
   // Courant number upon request
@@ -79,7 +83,7 @@ protected:
   MaterialProperty<Real> & _Pr;
   MaterialProperty<Real> & _Nu;
   MaterialProperty<Real> & _h;
-  MaterialProperty<Real> & _well_perimeter;
+
   // equivalent conductivity of mixture
   MaterialProperty<RankTwoTensor> & _lambda_sf;
   // coefficient for thermal time kernel
@@ -108,16 +112,14 @@ protected:
   const MaterialProperty<Real> & _drho_dT_f;
   const MaterialProperty<Real> & _drho_dp_f;
   const MaterialProperty<Real> & _mu_f;
-  const MaterialProperty<Real> & _scale_factor;
   // imported darcy velocity from TigerHydraulicMaterial
   const MaterialProperty<RealVectorValue> * _dv;
-  // The ratio of the remaining flow below the loss zone to the flow above the loss zone
+  // scaling factor
   MaterialProperty<Real> & _fluid_remain_factor;
-  // function (as of time and space) for the ratio of the remaining flow
+  // Initial scaling factor
   const Function & _fluid_remain_factor0;
-
   // userobject to calculate upwinding
   const TigerSUPG * _supg_uo;
 };
 
-#endif /* TIGERTHERMALMATERIALT_H */
+#endif /* WB2DCOUPLEDTHERMALMATERIALTH_H*/

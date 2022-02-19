@@ -1,0 +1,12 @@
+
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerHydraulicKernelH.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerHydraulicTimeKernelH.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerHydroMechanicsKernelHM.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerSoluteAdvectionKernelS.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerSoluteDiffusionKernelS.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerSoluteTimeKernelS.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerThermalAdvectionKernelT.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerThermalDiffusionKernelT.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerThermalSourceKernelT.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/TigerThermalTimeKernelT.C"
+#include"/home/jiapril/projects/Tiger/src/kernels/WBCoupledHeatSourceT.C"

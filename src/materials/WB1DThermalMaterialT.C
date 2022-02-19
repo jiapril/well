@@ -59,7 +59,11 @@ validParams<WB1DThermalMaterialT>()
         "The user defined factor to scale SU/PG coefficent (tau)");
   params.addParam<FunctionName>("user_velocity", 0.0,
         "a vector function to define the velocity field");
-    params.addParam<FunctionName>("fluid_remain_factor", 1.0, "The ratio of the remaining fluid.");
+  params.addParam<Real>("natural_convection_factor", 1.0, "Scale factor for heat transfer coefficient due to natural convection " 
+  "under shut-in condition. The default 1.0 corresponds to when there is no natural convection and only conduction exisiting. "
+  "Refer to Wang et.al 2019 for the reason of using this factor");
+  params.addParam<FunctionName>("fluid_remain_factor", 1.0, "The ratio of the remaining flow below the loss zone to the flow "
+  "above the loss zone");
   params.addParam<UserObjectName>("supg_uo", "",
         "The name of the userobject for SU/PG");
   params.addClassDescription("Thermal material for thermal kernels (ONLY for 1-D well in XYZ coordinate system)");
@@ -78,6 +82,7 @@ WB1DThermalMaterialT::WB1DThermalMaterialT(const InputParameters & parameters)
     _has_PeCr(getParam<bool>("output_Pe_Cr_numbers")),
     _has_supg(getParam<bool>("has_supg")),
     _supg_scale(getParam<Real>("supg_coeficient_scale")),
+    _scale_factor_natural_convection(getParam<Real>("natural_convection_factor")),
     _Re(declareProperty<Real>("reynold_number")),
     _Pr(declareProperty<Real>("prandtl_number")),
     _Nu(declareProperty<Real>("nusselt_number")),
@@ -178,15 +183,15 @@ WB1DThermalMaterialT::computeQpProperties()
   _well_perimeter[_qp] = 2 * pow(_scale_factor[_qp]/PI, 0.5) * PI;
   _Re[_qp]= 2*_av[_qp].norm()*_rho_f[_qp]*pow(_scale_factor[_qp]/PI, 0.5)/_mu_f[_qp];
   
-  //Dittus-Boelter correlation for turbulent flow
+  //caculation of Nusselt number 
   if (_Re[_qp]>1e4)
-       _Nu[_qp]=0.023*pow(_Re[_qp],0.8)*pow(_Pr[_qp],0.3);
-  else if (_av[_qp].norm()<1e-6 ||_Re[_qp]<1e-6)
-       _Nu[_qp]=2.0;
-  else if (_Re[_qp]< 2300)
+       _Nu[_qp]=0.023*pow(_Re[_qp],0.8)*pow(_Pr[_qp],0.4);   //Dittus-Boelter correlation for turbulent flow
+  else if (_av[_qp].norm()<1e-6 ||_Re[_qp]<1e-6)            //shut-in condition
+       _Nu[_qp]=2.0*_scale_factor_natural_convection;  
+  else if (_Re[_qp]< 2300)                                 //laminar flow
        _Nu[_qp]=4.36;
   else
-       _Nu[_qp]=4.36+(_Re[_qp]-2300)*(36.45*pow(_Pr[_qp],0.3)-4.36)/7700;
+       _Nu[_qp]=4.36+(_Re[_qp]-2300)*(36.45*pow(_Pr[_qp],0.3)-4.36)/7700; //linear interpolation between laminar and turbulent flow
        
   _h[_qp]= _Nu[_qp]*_lambda_f[_qp]/(pow(_scale_factor[_qp]/PI, 0.5)*2);
           
@@ -219,7 +224,7 @@ WB1DThermalMaterialT::Ari_Cond_Calc(Real const & n, Real const & lambda_f, const
   lambda_y.zero();
   lambda_z.zero();
 
-  switch (_ct)
+  switch (_ct)  //modified from TigerThermalMaterialT, but _ct is not necessary here.
   {
       case CT::isotropic:
         if (lambda_s.size() != 1)

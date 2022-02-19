@@ -30,17 +30,15 @@ InputParameters
 validParams<WBMovingPointSourceH>()
 {
   InputParameters params = validParams<DiracKernel>();
-  params.addParam<FunctionName>("x_coord_function", "x coordinate of the point source as a function of time ");
-  params.addParam<FunctionName>("y_coord_function", "y coordinate of the point source as a function of time ");
-  params.addParam<FunctionName>("z_coord_function", "z coordinate of the point source as a function of time ");
+  params.addParam<FunctionName>("x_coord_function", "x coordinate of the point as a function of time ");
+  params.addParam<FunctionName>("y_coord_function", "y coordinate of the point as a function of time ");
+  params.addParam<FunctionName>("z_coord_function", "z coordinate of the point as a function of time ");
   params.addParam<Real>("mass_flux",0.0,"The constant mass flow rate at this point (well bottom) in kg/s (positive is injection, negative is production)");
   params.addParam<FunctionName>("mass_flux_function", "The mass flow rate as a function of time at this point (well bottom) in kg/s"
                                                       "(positive-valued function is injection, negative-valued function is production)");
   params.addParam<Real>("start_time", 0.0, "The time at which the source will start (the case of the constant flow rate)");
   params.addParam<Real>("end_time", 1.0e30, "The time at which the source will end (the case of the constant flow rate)");
-  params.addClassDescription("This type of point source is used to mimic the drilling procedure of a well"
-  "i.e., the same amount of injected fluid is removed through a moving point source at a depth,"
-  "and such depth is a function of time that should be implemented according to the drilling schedule.");
+  params.addClassDescription("Injection/Production well that adds (removes) fluid at the well point");
   return params;
 }
 
