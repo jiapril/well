@@ -1,6 +1,6 @@
-/home/jiapril/projects/tiger/src/main.x86_64-pc-linux-gnu.opt.lo: \
- /home/jiapril/projects/tiger/src/main.C \
- /home/jiapril/projects/tiger/build/header_symlinks/TigerApp.h \
+/home/jiapril/projects/Tiger/src/main.x86_64-pc-linux-gnu.opt.lo: \
+ /home/jiapril/projects/Tiger/src/main.C \
+ /home/jiapril/projects/Tiger/build/header_symlinks/TigerApp.h \
  /home/jiapril/projects/moose/framework/build/header_symlinks/MooseApp.h \
  /home/jiapril/projects/moose/framework/build/header_symlinks/Moose.h \
  /home/jiapril/projects/moose/scripts/../libmesh/installed/include/libmesh/perf_log.h \
@@ -307,7 +307,7 @@
  /home/jiapril/projects/moose/framework/build/header_symlinks/MooseInit.h \
  /home/jiapril/projects/moose/framework/build/header_symlinks/AppFactory.h
 
-/home/jiapril/projects/tiger/build/header_symlinks/TigerApp.h:
+/home/jiapril/projects/Tiger/build/header_symlinks/TigerApp.h:
 
 /home/jiapril/projects/moose/framework/build/header_symlinks/MooseApp.h:
 

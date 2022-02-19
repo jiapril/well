@@ -229,57 +229,6 @@ Velocity in the well, but the use of it has strong limitations!
 
 
 /*
-Velocity in the well, but the use of it has strong limitations! 
-    o Only for the "velocity_three_compents type". This means: no hydraulic equations coupled here!
-    o When applied, only one velocity component out of _vel_func_x, _vel_func_y,_vel_func_z is one-zero (this component
-      is in the direction of injection), the other two components are zero.
-    o That non-zero component (e.g. _vel_func_x) is the well flow velocity when there is no flow loss (e.g., velocity caculated at well-head)
-    o The velocity of the flow anywhere is defined as _vel_func_x * _fluid_remain_factor. Herein, the _fluid_remain_factor is a function that can
-      both depend on time and space. If no loss presents, _fluid_remain_factor should be 1.0.
-*/
-RankTwoTensor
-WB2DThermalMaterialT::Ari_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim)
-{
-  RankTwoTensor lambda = RankTwoTensor();
-  RealVectorValue lambda_x;
-  RealVectorValue lambda_y;
-  RealVectorValue lambda_z;
-  lambda_x.zero();
-  lambda_y.zero();
-  lambda_z.zero();
-
-
-  if (dim !=2)
-     mooseError("So far only 2d elements can use type of material.\n");
-     
-  
-  
-  
-  else
-  {
-     switch (_ct)
-     {
-       case CT::isotropic:
-         if (lambda_s.size() != 1)
-            mooseError("One input value is needed for isotropic distribution of thermal conductivity! You provided ", lambda_s.size(), " values.\n");
-         lambda = ((1.0 - n) * lambda_s[0] + n * lambda_f) * RankTwoTensor(1., 1., 0., 0., 0., 0.);
-         break;
-       case CT::orthotropic:
-         if (lambda_s.size() != 2)
-            mooseError("Two input values are needed for orthotropic distribution of thermal conductivity in two dimensional elements! You provided ", lambda_s.size(), " values.\n");
-         lambda  = (1.0 - n)    * RankTwoTensor(lambda_s[0], lambda_s[1], 0., 0., 0., 0.);
-         lambda += n * lambda_f * RankTwoTensor(1.         , 1.         , 0., 0., 0., 0.);
-         break;
-       case CT::anisotropic:
-            mooseError("This type of heat conductivity is not considered");
-         break;
-      }
-    }
-  return lambda;
-}
-
-
-/*
 The values for borehole thermal conductivity are assigned in two directions!
 This is essentially a trick that makes the thermal modeling in the borehole one-dimensional, despite that the
 mesh is two-dimensional. To do this, the thermal conductivity in the flow direction is the same as the thermal conductivity
@@ -288,6 +237,7 @@ flow direction. The user can decide this direction according to the coordinate o
 heat transfer needs to be given. This vaule should be large enough such that the temperature at the borehole cross section is homongenous.
 A figure to explain this idea is also given in folder "supplementary_figure".
 */
+
 RankTwoTensor
 WB2DThermalMaterialT::Borehole_Thermal_Conductivity(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim)
 {
@@ -302,24 +252,24 @@ WB2DThermalMaterialT::Borehole_Thermal_Conductivity(Real const & n, Real const &
  if (dim !=2)
      mooseError("Only two-dimensional elements can use type of material.\n");
 
-  else
+ else
   {
     switch (_heat_transfer_direction)
     {
       case HTD::x:
           if (lambda_s.size() != 2)
              mooseError("Two input values are needed for orthotropic distribution of thermal conductivity in two dimensional elements! You provided ", lambda_s.size(), " values.\n");
-             lambda  = (1.0 - n)    * RankTwoTensor(lambda_f, lambda_s[1], 0., 0., 0., 0.);
-             lambda += n * RankTwoTensor(lambda_s[0], lambda_f, 0., 0., 0., 0.);          
-      break;
+          lambda  = (1.0 - n)    * RankTwoTensor(lambda_f, lambda_s[1], 0., 0., 0., 0.);
+          lambda += n * RankTwoTensor(lambda_s[0], lambda_f, 0., 0., 0., 0.);       // Arithmetic mean    
+          break;
 
       case HTD::y:
           if (lambda_s.size() != 2)
              mooseError("Two input values are needed for orthotropic distribution of thermal conductivity in two dimensional elements! You provided ", lambda_s.size(), " values.\n");
-             lambda  = (1.0 - n)    * RankTwoTensor(lambda_s[0], lambda_f, 0., 0., 0., 0.);
-             lambda += n * RankTwoTensor(lambda_f, lambda_s[1], 0., 0., 0., 0.);          
-      break;
+          lambda  = (1.0 - n)    * RankTwoTensor(lambda_s[0], lambda_f, 0., 0., 0., 0.);
+          lambda += n * RankTwoTensor(lambda_f, lambda_s[1], 0., 0., 0., 0.);      // Arithmetic mean  
+          break;
     }
-   }
+  }
   return lambda;
 }

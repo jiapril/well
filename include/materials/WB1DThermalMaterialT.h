@@ -43,12 +43,6 @@ private:
   // enum to select type of advection velocity
   enum AT {pure_diffusion, darcy_velocity, user_velocity, darcy_user_velocities};
   MooseEnum _at;
-  // enum to select thermal conductivity distribution for solid phase
-  enum CT {isotropic, orthotropic, anisotropic};
-  MooseEnum _ct;
-  // enum to select calculation method for mixture thermal conductivity
-  enum M {arithmetic, geometric};
-  MooseEnum _mean;
 
   // initial thermal conductivity for solid phase
   std::vector<Real> _lambda0;
@@ -69,8 +63,6 @@ private:
 protected:
   virtual void computeQpProperties() override;
   RankTwoTensor Ari_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim);
-  RankTwoTensor Geo_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim);
-  Moose::CoordinateSystemType _coord_type;
   // Peclet number upon request
   MaterialProperty<Real> * _Pe;
   // Courant number upon request
@@ -79,6 +71,7 @@ protected:
   MaterialProperty<Real> & _Pr;
   MaterialProperty<Real> & _Nu;
   MaterialProperty<Real> & _h;
+  // borehole perimeter
   MaterialProperty<Real> & _well_perimeter;
   // equivalent conductivity of mixture
   MaterialProperty<RankTwoTensor> & _lambda_sf;

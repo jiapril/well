@@ -44,13 +44,6 @@ validParams<WB1DThermalMaterialT>()
   params.addParam<MooseEnum>("advection_type", Advection,
         "Type of the velocity to simulate advection [pure_diffusion "
         "darcy_velocity user_velocity darcy_user_velocities]");
-  MooseEnum CT("isotropic orthotropic anisotropic");
-  params.addRequiredParam<MooseEnum>("conductivity_type", CT,
-        "Thermal conductivity distribution type [isotropic, orthotropic, anisotropic]");
-  MooseEnum Mean("arithmetic geometric", "arithmetic");
-  params.addParam<MooseEnum>("mean_calculation_type", Mean,
-        "Solid-liquid mixture thermal conductivity calculation method "
-        "[arithmetic, geometric]");
   params.addParam<bool>("output_Pe_Cr_numbers", false ,
         "calcuate Peclet and Courant numbers");
   params.addParam<bool>("has_supg", false ,
@@ -74,8 +67,6 @@ validParams<WB1DThermalMaterialT>()
 WB1DThermalMaterialT::WB1DThermalMaterialT(const InputParameters & parameters)
   : Material(parameters),
     _at(getParam<MooseEnum>("advection_type")),
-    _ct(getParam<MooseEnum>("conductivity_type")),
-    _mean(getParam<MooseEnum>("mean_calculation_type")),
     _lambda0(getParam<std::vector<Real>>("lambda")),
     _cp0(getParam<Real>("specific_heat")),
     _rho0(getParam<Real>("density")),
@@ -140,17 +131,8 @@ WB1DThermalMaterialT::computeQpProperties()
   _TimeKernelT[_qp] = rho_m * c_p_m;
   _dTimeKernelT_dT[_qp] = _n[_qp] * _drho_dT_f[_qp] * c_p_m;
   _dTimeKernelT_dp[_qp] = _n[_qp] * _drho_dp_f[_qp] * c_p_m;
-
-  switch (_mean)
-  {
-    case M::arithmetic:
-      _lambda_sf[_qp] = Ari_Cond_Calc(_n[_qp], _lambda_f[_qp], _lambda0, _current_elem->dim());
-      break;
-    case M::geometric:
-      _lambda_sf[_qp] = Geo_Cond_Calc(_n[_qp], _lambda_f[_qp], _lambda0, _current_elem->dim());
-      break;
-  }
-
+  _lambda_sf[_qp] = Ari_Cond_Calc(_n[_qp], _lambda_f[_qp], _lambda0, _current_elem->dim());
+  
   if (_current_elem->dim() < _mesh.dimension())
     _lambda_sf[_qp].rotate(_rot_mat[_qp]);
 
@@ -177,9 +159,6 @@ WB1DThermalMaterialT::computeQpProperties()
   Real lambda = _lambda_sf[_qp].trace() / (_current_elem->dim() * _TimeKernelT[_qp]);
 
   _Pr[_qp]= _mu_f[_qp]*_cp_f[_qp]/_lambda_f[_qp];
-
-  _coord_type = _subproblem.getCoordSystem(_current_elem->subdomain_id());
-
   _well_perimeter[_qp] = 2 * pow(_scale_factor[_qp]/PI, 0.5) * PI;
   _Re[_qp]= 2*_av[_qp].norm()*_rho_f[_qp]*pow(_scale_factor[_qp]/PI, 0.5)/_mu_f[_qp];
   
@@ -214,7 +193,7 @@ WB1DThermalMaterialT::computeQpProperties()
 }
 
 RankTwoTensor
-WB1DThermalMaterialT::Ari_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim)
+WB1DThermalMaterialT::Ari_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim) //arithermatic mean
 {
   RankTwoTensor lambda = RankTwoTensor();
   RealVectorValue lambda_x;
@@ -223,44 +202,8 @@ WB1DThermalMaterialT::Ari_Cond_Calc(Real const & n, Real const & lambda_f, const
   lambda_x.zero();
   lambda_y.zero();
   lambda_z.zero();
-
-  switch (_ct)  //modified from TigerThermalMaterialT, but _ct is not necessary here.
-  {
-      case CT::isotropic:
-        if (lambda_s.size() != 1)
-          mooseError("One input value is needed for isotropic distribution of thermal conductivity! You provided ", lambda_s.size(), " values.\n");
-        lambda = ((1.0 - n) * lambda_s[0] + n * lambda_f) * RankTwoTensor(1., 0., 0., 0., 0., 0.);
-        break;
-      case CT::orthotropic ... CT::anisotropic:
-        mooseError("One dimensional elements cannot have non-isotropic thermal conductivity values.\n");
-        break;
-    }
-
-  return lambda;
-}
-
-RankTwoTensor
-WB1DThermalMaterialT::Geo_Cond_Calc(Real const & n, Real const & lambda_f, const std::vector<Real> & lambda_s, const int & dim)
-{
-  RankTwoTensor lambda = RankTwoTensor();
-  RealVectorValue lambda_x;
-  RealVectorValue lambda_y;
-  RealVectorValue lambda_z;
-  lambda_x.zero();
-  lambda_y.zero();
-  lambda_z.zero();
-
-  switch (_ct)
-  {
-      case CT::isotropic:
-        if (lambda_s.size() != 1)
-          mooseError("One input value is needed for isotropic distribution of thermal conductivity! You provided ", lambda_s.size(), " values.\n");
-        lambda = RankTwoTensor(1., 0., 0., 0., 0., 0.) * std::pow(lambda_f,n) * std::pow(lambda_s[0],(1.-n));
-      break;
-      case CT::orthotropic ... CT::anisotropic:
-        mooseError("One dimensional elements cannot have non-isotropic thermal conductivity values.\n");
-        break;
-    }
-
+  if (lambda_s.size() != 1)
+      mooseError("Only one input value is needed! You provided ", lambda_s.size(), " values.\n");
+  lambda = ((1.0 - n) * lambda_s[0] + n * lambda_f) * RankTwoTensor(1., 0., 0., 0., 0., 0.);
   return lambda;
 }

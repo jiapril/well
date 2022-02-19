@@ -49,11 +49,11 @@
   [../]
   [./well_geometry]
     type = TigerGeometryMaterial
-    scale_factor = 0.038
+    scale_factor = 0.038  ## Must be the area of the borehole cross section!!
   [../]
   [./well_porosity]
     type = TigerPorosityMaterial
-    porosity = 1.0
+    porosity = 1.0   ## Must always be 1.0 !!
     specific_density = 0.0
   [../]
   [./well_h]
@@ -64,8 +64,7 @@
   [../]
   [./well_t] 
     type =  WB1DThermalMaterialT
-    conductivity_type = isotropic
-    lambda= 1.5
+    lambda= 1.5  # Provided, but has no meaning!
     density = 2650
     specific_heat = 1000
     advection_type = darcy_velocity
