@@ -45,15 +45,15 @@ validParams<WBMovingPointSourceH>()
 WBMovingPointSourceH::WBMovingPointSourceH(
     const InputParameters & parameters)
   : DiracKernel(parameters),
-    _x_function(&getFunction("x_coord_function")),
-    _y_function(&getFunction("y_coord_function")),
-    _z_function(&getFunction("z_coord_function")),
     _mass_flux(getParam<Real>("mass_flux")),
     _start_time(getParam<Real>("start_time")),
     _end_time(getParam<Real>("end_time")),
-    _rhof(getMaterialProperty<Real>("fluid_density")),
-    _mass_flux_function(isParamValid("mass_flux_function") ? &getFunction("mass_flux_function") : NULL)
-{
+    _rhof(getMaterialProperty<Real>("fluid_density"))  
+{  _x_function=&getFunction("x_coord_function");
+   _y_function=&getFunction("y_coord_function");
+   _z_function=&getFunction("z_coord_function");        
+   _mass_flux_function = isParamValid("mass_flux_function") ?
+                        &getFunction("mass_flux_function") : NULL;       
   /// Sanity check to ensure that the end_time is greater than the start_time
   if (_end_time <= _start_time)
     mooseError("Start time for TigerPointSourceH is ",_start_time," but it must be less than end time ",_end_time);

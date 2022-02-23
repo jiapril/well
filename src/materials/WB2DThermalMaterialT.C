@@ -235,7 +235,7 @@ mesh is two-dimensional. To do this, the thermal conductivity in the flow direct
 of the fluid. The "_heat_transfer_direction" is the direction of the lateral heat transfer, which is perpendicular to the
 flow direction. The user can decide this direction according to the coordinate of the mesh. The thermal conductivity in the direction of lateral 
 heat transfer needs to be given. This vaule should be large enough such that the temperature at the borehole cross section is homongenous.
-A figure to explain this idea is also given in folder "supplementary_figure".
+A figure to explain this idea is also given in folder "supplementary_material".
 */
 
 RankTwoTensor

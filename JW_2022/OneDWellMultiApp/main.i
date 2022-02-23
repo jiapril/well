@@ -30,14 +30,26 @@
   [./geometry]
     type = TigerGeometryMaterial
   [../]
-  [./rock_p]
+  [./casing_p]
     type = TigerPorosityMaterial
     porosity = 0.0
-    specific_density = 1.0
+    specific_density = 8000
+    block = 'casing1 casing2 casing3 casing4'
+  [../]
+    [./cement_p]
+    type = TigerPorosityMaterial
+    porosity = 0.0
+    specific_density = 1760
+    block = 'cement'
+  [../]
+  [./matrix_p]
+    type = TigerPorosityMaterial
+    porosity = 0.0
+    specific_density = 2650
+    block = 'matrix'
   [../]
   [./matrix_casing_H]
     fp_uo = water
-    #pressure = 3.3973e7
     temperature = temperature_s
     type = TigerFluidMaterial
   [../]
@@ -45,7 +57,6 @@
     type = TigerThermalMaterialT
     conductivity_type = isotropic
     lambda= 50
-    density = 8000
     specific_heat = 500
     block = 'casing1 casing2 casing3 casing4'
     advection_type = pure_diffusion
@@ -54,7 +65,6 @@
     type = TigerThermalMaterialT
     conductivity_type = isotropic
     lambda = 1.2
-    density = 1760
     specific_heat = 1000
     block = 'cement'
     advection_type = pure_diffusion
@@ -63,7 +73,6 @@
     advection_type = pure_diffusion
     block = 'matrix'
     conductivity_type = isotropic
-    density= 2650
     lambda = 2.0
     specific_heat = 900
     type = TigerThermalMaterialT
