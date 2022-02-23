@@ -1,0 +1,155 @@
+<Simulation verbosity="debug">
+
+<RunInfo>
+    <Sequence>
+        EnsembleModel,Adaptdump
+    </Sequence>
+ <batchSize>1</batchSize>
+<WorkingDir>Samples</WorkingDir>
+</RunInfo>
+
+
+<Files>
+    <Input name="tiger_input"  type="">../forward_sampling.i</Input>
+    <Input name="mesh.msh" type="">../mesh.msh</Input>
+    <Input name="flow_rate_file.csv" type="">../flow_rate_file.csv</Input>
+    <Input name="time_step_file.csv" type="">../time_step_file.csv</Input>  
+    <Input name="SFT.csv" type="Generic">../SFT.csv</Input>
+    <Input name="flow_loss1.txt" type="Generic">../flow_loss1.txt</Input>
+    <Input name="flow_loss2.txt" type="Generic">../flow_loss2.txt</Input>
+    <Input name="flow_loss3.txt" type="Generic">../flow_loss3.txt</Input>
+</Files>
+
+<!-- The execution steps for models and IO!-->
+<Steps>
+    <MultiRun name='EnsembleModel'>
+      <Input class='Files' type=''>tiger_input</Input>
+      <Input class='Files' type=''>flow_rate_file.csv</Input>
+      <Input class='Files' type=''>time_step_file.csv</Input>
+      <Input class='Files' type='Generic'>SFT.csv</Input>
+      <Input class='Files' type='Generic'>flow_loss1.txt</Input>
+      <Input class='Files' type='Generic'>flow_loss2.txt</Input>
+      <Input class='Files' type='Generic'>flow_loss3.txt</Input>
+      <Model class='Models' type='EnsembleModel'>Tiger_with_SFT_perturbed</Model>
+      <Sampler class="Samplers" type="Stratified">LHS</Sampler>
+      <Output class='DataObjects' type='PointSet'>sampledPoints</Output>
+    </MultiRun>
+     <IOStep name="Adaptdump" pauseAtEnd="true">
+       <Input class="DataObjects" type="PointSet">sampledPoints</Input>
+      <Output class="OutStreams" type="Print">sampledPointsDump</Output>
+    </IOStep>
+</Steps>
+
+<!-- DataObjects used in the model !-->
+<DataObjects>
+  <PointSet name="sampledPoints">
+      <Input>grad,fls1,fls2,fls3</Input>
+      <Output>temp</Output>
+  </PointSet>
+
+    <PointSet name="sft_inputHolder">
+    <Input>grad</Input>
+    <Output>OutputPlaceHolder</Output>
+  </PointSet>
+  
+  <PointSet name="sft_generator">
+      <Input>grad</Input>
+      <Output>temp</Output>
+  </PointSet>
+  
+  <HistorySet name="moosePS">
+      <Input>temp,fls1,fls2,fls3</Input>
+      <Output>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,
+              pointvalue14,pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44</Output>
+  </HistorySet>
+      
+</DataObjects>
+
+<!-- Distribute functions of the four variables !-->
+<Distributions>
+    <Uniform name="grad">
+      <upperBound>0.2</upperBound>
+      <lowerBound>0</lowerBound>
+    </Uniform>
+    <Uniform name="fls1">
+      <upperBound>0.6</upperBound>
+      <lowerBound>0.4</lowerBound>
+    </Uniform>
+    <Uniform name="fls2">
+      <upperBound>0.6</upperBound>
+      <lowerBound>0.4</lowerBound>
+    </Uniform>
+    <Uniform name="fls3">
+      <upperBound>0.6</upperBound>
+      <lowerBound>0.4</lowerBound>
+    </Uniform>
+  </Distributions>
+
+<!-- Generate the four variables using Latin hypercube !-->
+<Samplers>
+    <Stratified name="LHS">
+      <samplerInit>
+        <initialSeed>123</initialSeed>
+      </samplerInit>
+      <variable name="grad">
+        <distribution>grad</distribution>
+        <grid construction="equal" steps="1" type="value">0 0.2</grid>
+      </variable>
+      <variable name="fls1">
+        <distribution>fls1</distribution>
+        <grid construction="equal" steps="1" type="value">0 0.2</grid>
+      </variable>
+      <variable name="fls2">
+        <distribution>fls2</distribution>
+        <grid construction="equal" steps="1" type="value">0.1 0.9</grid>
+      </variable>
+      <variable name="fls3">
+        <distribution>fls3</distribution>
+        <grid construction="equal" steps="1" type="value">0.1 0.9</grid>
+      </variable>
+    </Stratified>
+</Samplers>
+
+
+<Models>
+   <!-- Generate temperature, temp,  using thermal gradient, grad, according to the user-defined function defined in sft_generator.py!-->
+    <ExternalModel ModuleToLoad="sft_generator" name="sft_generator" subType="">       
+       <variables>grad,temp</variables>
+    </ExternalModel>
+   <!-- Call up Tiger application-->
+    <Code name='Tiger' subType='MooseBasedApp'>
+       <executable>~/projects/Tiger/tiger-opt/</executable>
+    </Code>
+    
+   <!-- Execute model in serie: firstly the "sft_generator", then the Tiger-->    
+   <EnsembleModel name="Tiger_with_SFT_perturbed" subType="">
+      <Model class="Models" type="ExternalModel">
+           sft_generator
+           <Input class="DataObjects" type="PointSet">sft_inputHolder</Input>
+           <TargetEvaluation class="DataObjects" type="PointSet">sft_generator</TargetEvaluation>
+      </Model>
+      <Model class="Models" type="Code">Tiger
+           <Input class='Files' type=''>tiger_input</Input>
+           <Input class='Files' type=''>mesh.msh</Input>
+           <Input class='Files' type=''>flow_rate_file.csv</Input>
+           <Input class='Files' type=''>time_step_file.csv</Input>
+           <Input class='Files' type='Generic'>SFT.csv</Input>
+           <Input class='Files' type='Generic'>flow_loss1.txt</Input>
+           <Input class='Files' type='Generic'>flow_loss2.txt</Input>
+           <Input class='Files' type='Generic'>flow_loss3.txt</Input>
+           <TargetEvaluation class="DataObjects" type="HistorySet">moosePS</TargetEvaluation>
+      </Model>
+   </EnsembleModel>   
+</Models>
+
+
+<OutStreams>
+    <Print name="sampledPointsDump">
+      <type>csv</type>
+      <source>sampledPoints</source>
+    </Print>
+</OutStreams>
+
+</Simulation>

@@ -1,0 +1,12 @@
+<DataObjectMetadata name="training_InputOutput">
+  <DataSet type="Static">
+    <general>
+      <datasetName>training_InputOutput</datasetName>
+      <inputs>grad,fls1,fls2,fls3</inputs>
+      <outputs>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,pointvalue14,pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44</outputs>
+      <pointwise_meta>PointProbability,ProbabilityWeight,ProbabilityWeight-fls1,ProbabilityWeight-fls2,ProbabilityWeight-fls3,ProbabilityWeight-grad,prefix</pointwise_meta>
+      <sampleTag>RAVEN_sample_ID</sampleTag>
+    </general>
+  </DataSet>
+  
+</DataObjectMetadata>

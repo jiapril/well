@@ -1,0 +1,11 @@
+<DataObjectMetadata name="out_export">
+  <DataSet type="Static">
+    <general>
+      <datasetName>out_export</datasetName>
+      <inputs>traceID</inputs>
+      <outputs>grad,fls1,fls2,fls3,LogPosterior,AcceptRate,pout</outputs>
+      <sampleTag>RAVEN_sample_ID</sampleTag>
+    </general>
+  </DataSet>
+  
+</DataObjectMetadata>

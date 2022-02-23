@@ -1,0 +1,11 @@
+<DataObjectMetadata name="outSet">
+  <DataSet type="Static">
+    <general>
+      <datasetName>outSet</datasetName>
+      <inputs>grad,fls1,fls2,fls3</inputs>
+      <outputs>pout</outputs>
+      <sampleTag>RAVEN_sample_ID</sampleTag>
+    </general>
+  </DataSet>
+  
+</DataObjectMetadata>

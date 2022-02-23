@@ -1,0 +1,26 @@
+# This is the function 1 + 2x + 3y
+AXIS X
+-4375 -4200 -3400 0
+AXIS T
+6048000 9244800 10454400 12576449
+DATA
+# following is for t=6048000,70days
+0.0
+0.0
+0.0
+1.0
+# following is for t=9244800,107days
+0.0
+0.0
+$RAVEN-fls1$
+1.0
+# following is for t=10454400,121days
+0.0
+$RAVEN-fls1$
+$RAVEN-fls1$
+1.0
+# following is for t=12576450
+$RAVEN-fls1$
+$RAVEN-fls1$
+$RAVEN-fls1$
+1.0

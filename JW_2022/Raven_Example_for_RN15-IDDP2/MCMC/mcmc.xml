@@ -1,0 +1,254 @@
+<Simulation verbosity="debug">
+
+<RunInfo>
+    <Sequence>
+        loadROM,EnsembleModel,print,pp
+    </Sequence>
+    <WorkingDir>MH</WorkingDir>
+</RunInfo>
+
+
+
+<Files>
+    <Input name="rom" type="">../rom.pk</Input>
+</Files>
+
+<Steps>
+ <IOStep name="loadROM"> <!-- Load the pre-trained ROM file-->
+        <Input class="Files" type="">rom</Input>
+        <Output class="Models" type="ROM">ROM</Output>
+ </IOStep>
+ <MultiRun name='EnsembleModel'> <!-- Execute MCMC-->
+      <Input class="DataObjects" type="PointSet">ROMInput</Input>
+      <Model class='Models' type='EnsembleModel'>MCMC</Model>
+      <Sampler class="Samplers" type="Metropolis">Metropolis</Sampler>
+      <SolutionExport class="DataObjects" type="PointSet">out_export</SolutionExport>
+      <Output class="DataObjects" type="PointSet">outSet</Output>
+ </MultiRun>
+ <IOStep name="print"> <!-- Write out and save the samples-->
+      <Input class="DataObjects" type="PointSet">out_export</Input>
+      <Input class="DataObjects" type="PointSet">outSet</Input>
+      <Output class="OutStreams" type="Print">dumpExport</Output>
+      <Output class="OutStreams" type="Print">dumpOut</Output>
+ </IOStep>  
+ <PostProcess name="pp"> <!-- Postprocess some statistical number-->
+      <Input class="DataObjects" type="PointSet">out_export</Input>
+      <Model class="Models" type="PostProcessor">posteriorMode</Model>
+      <Output class="DataObjects" type="PointSet">posterior_basicStat</Output>
+      <Output class="OutStreams" type="Print">posterior_basicStat_dump</Output>
+ </PostProcess>
+ </Steps>
+
+
+
+<DataObjects> <!-- Define the dataobjects required for each step-->
+
+  <PointSet name="ROMInput">
+      <Input>grad,fls1,fls2,fls3</Input>
+      <Output>OutputPlaceHolder</Output>
+  </PointSet>
+  
+  <PointSet name="ROMInputOutput">
+      <Input>grad,fls1,fls2,fls3</Input>
+      <Output>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,
+              pointvalue14,pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44</Output>
+  </PointSet>
+  
+  <PointSet name="MCMCInput">
+    <Input>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,
+              pointvalue14,pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44</Input>
+    <Output>OutputPlaceHolder</Output>
+  </PointSet>
+  
+  <PointSet name="outSet">
+    <Input>
+      grad,fls1,fls2,fls3
+    </Input>
+    <Output>pout</Output>   
+  </PointSet> 
+  
+  <PointSet name="likelihood">
+    <Input>
+      pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,pointvalue14,
+      pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44
+    </Input>
+    <Output>pout</Output>
+  </PointSet> 
+   
+  <PointSet name="out_export">
+    <Input>traceID</Input>
+    <Output>grad,fls1,fls2,fls3,LogPosterior,AcceptRate,pout</Output>
+  </PointSet>
+  
+  <PointSet name="posterior_basicStat">
+      <Output>mean_grad,sigma_grad,mean_fls1,sigma_fls1,mean_fls2,sigma_fls2,mean_fls3,sigma_fls3</Output>
+  </PointSet>
+
+</DataObjects>
+
+<OutStreams> <!-- Define the dataobjects required for writing out results-->
+    <Print name="dumpOut">
+      <type>csv</type>
+      <source>outSet</source>
+      <what>input, output</what>
+    </Print>
+    <Print name="dumpExport">
+      <type>csv</type>
+      <source>out_export</source>
+      <what>input, output</what>
+    </Print>
+    <Print name="posterior_basicStat_dump">
+      <type>csv</type>
+      <source>posterior_basicStat</source>
+      <what>input, output</what>
+    </Print>
+</OutStreams>
+
+
+
+<Distributions> <!-- Define the prior and proposal distribution function for each variable -->
+   <Normal name="normal_grad"> <!-- E.g., Proposal distribution function for variable "grad", see https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm-->
+      <mean>0</mean>
+      <sigma>0.05</sigma>
+   </Normal>
+   <Uniform name="grad">       <!-- E.g., Prior distribution function for variable "grad" -->
+      <upperBound>0.2</upperBound>
+      <lowerBound>0</lowerBound>
+   </Uniform>
+    
+   <Normal name="normal_fls1">
+      <mean>0</mean>
+      <sigma>0.05</sigma>
+   </Normal>
+   <Uniform name="fls1">
+     <upperBound>0.14</upperBound>
+      <lowerBound>0.07</lowerBound>
+   </Uniform>
+   
+   <Normal name="normal_fls2">
+      <mean>0</mean>
+      <sigma>0.1</sigma>
+   </Normal>
+   <Uniform name="fls2">
+      <upperBound>0.9</upperBound>
+      <lowerBound>0.1</lowerBound>
+   </Uniform>
+
+   <Normal name="normal_fls3">
+      <mean>0</mean>
+      <sigma>0.1</sigma>
+   </Normal>
+   <Uniform name="fls3">
+      <upperBound>0.9</upperBound>
+      <lowerBound>0.1</lowerBound>
+   </Uniform>
+</Distributions>
+
+<Samplers> <!-- Set-up parameters for Metropolis–Hastings sampling (core of MCMC!) -->
+   <Metropolis name="Metropolis">
+   <samplerInit>
+        <limit>1000</limit>
+        <initialSeed>123456789</initialSeed>
+        <burnIn>0</burnIn>
+   </samplerInit>
+   
+   <likelihood log="True">pout</likelihood>
+   
+   <variable name="grad">
+      <distribution>grad</distribution>
+      <initial>0.1</initial>
+      <proposal class="Distributions" type="Normal">normal_grad</proposal>
+   </variable>
+      
+   <variable name="fls1">
+      <distribution>fls1</distribution>
+      <initial>0.1</initial>
+      <proposal class="Distributions" type="Normal">normal_fls1</proposal>
+   </variable>
+      
+   <variable name="fls2">
+      <distribution>fls2</distribution>
+      <initial>0.5</initial>
+      <proposal class="Distributions" type="Normal">normal_fls2</proposal>
+   </variable>
+   
+   <variable name="fls3">
+      <distribution>fls3</distribution>
+      <initial>0.5</initial>
+      <proposal class="Distributions" type="Normal">normal_fls3</proposal>
+   </variable>
+   
+   <TargetEvaluation class="DataObjects" type="PointSet">outSet</TargetEvaluation>
+   </Metropolis>
+</Samplers>
+
+
+<Models> 
+     <ROM name="ROM" subType="MLPRegressor">  <!-- Designate which ROM we are using here -->
+      <Features>grad,fls1,fls2,fls3</Features>
+        <Target>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,
+              pointvalue14,pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44</Target>
+       <hidden_layer_sizes>75,75</hidden_layer_sizes>
+      <activation>relu</activation>
+      <solver>lbfgs</solver>
+      <alpha>0.001</alpha>
+      <batch_size>500</batch_size>
+      <learning_rate>adaptive</learning_rate>
+      <learning_rate_init>0.002</learning_rate_init>
+      <power_t>0.5</power_t>
+      <max_iter>50000</max_iter>
+      <shuffle>False</shuffle>
+      <random_state>130788</random_state>
+      <tol>1e-4</tol>
+      <verbose>False</verbose>
+      <warm_start>False</warm_start>
+      <momentum>0.9</momentum>
+      <nesterovs_momentum>True</nesterovs_momentum>
+      <early_stopping>False</early_stopping>
+      <validation_fraction>0.0</validation_fraction>
+      <beta_1>0.9</beta_1>
+      <beta_2>0.999</beta_2>
+      <epsilon>1e-8</epsilon>
+    </ROM>
+    
+
+    
+    <ExternalModel ModuleToLoad="likelihood_observed" name="likelihood" subType=""> <!-- User-defined likelihood function for MCMC step -->
+      <variables>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,pointvalue14,pointvalue15,pointvalue16,
+    pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44,pout</variables>
+    </ExternalModel>
+
+    
+  <EnsembleModel name="MCMC" subType="">  <!-- The ensembled MCMC model using the "ROM and "ExternalModel" defined above -->
+      <Model class="Models" type="ROM">
+        ROM    
+        <Input class="DataObjects" type="PointSet">ROMInput</Input> 
+        <TargetEvaluation class="DataObjects" type="PointSet">ROMInputOutput</TargetEvaluation>
+      </Model>
+      
+      <Model class="Models" type="ExternalModel">
+        likelihood
+        <Input class="DataObjects" type="PointSet">MCMCInput</Input>
+        <TargetEvaluation class="DataObjects" type="PointSet">likelihood</TargetEvaluation>
+      </Model>
+      
+  </EnsembleModel>
+    
+  <PostProcessor name="posteriorMode" subType="BasicStatistics">  <!-- Post-process some interested statistics from the samples -->
+      <expectedValue prefix="mean">grad,fls1,fls2,fls3</expectedValue>
+      <sigma prefix="sigma">grad,fls1,fls2,fls3</sigma>
+  </PostProcessor>
+  
+</Models>
+
+</Simulation>

@@ -1,0 +1,24 @@
+This is a showcase for how to purtube input varibles of a Tiger application using the RAVEN software (version until 2022/2/25, https://raven.inl.gov/SitePages/Overview.aspx).
+
+The given example here is based on the RN-15/IDDP2 well in Iceland. The purtubed variables are: the ratio of the remaining flow below each loss zone to the flow rate above the loss zone (which are fls1, fls2, fls3), the geothermal gradient for the depth interval 2500-4500 m. These four variables are needed in the input files for the Tiger application: flow_loss1.txt, flow_loss2.txt, flow_loss3.txt, SFT.csv.
+
+
+The Hierarchy of files:
+  
+  o SFT_perturbed.xml
+  
+      * sft_generator.py-------------->-----------------
+                                                        |
+      * forward_sampling.i                              |
+           + SFT.csv <-------------<--------------------
+           + flow_loss1.txt
+           + flow_loss2.txt
+           + flow_loss3.txt
+           + flow_rate_file.csv
+           + time_step_file.csv
+           + mesh.msh     
+
+To run the raven application, one should go to the raven directory, and use:  
+./raven_framework SFT_perturbed.xml
+
+

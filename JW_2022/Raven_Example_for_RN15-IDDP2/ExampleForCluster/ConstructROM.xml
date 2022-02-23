@@ -1,0 +1,199 @@
+<Simulation verbosity="debug">
+
+<RunInfo>
+    <Sequence>  
+    LoadTrainingInputOutput,LoadTrainingInput,ConstructROM,PredictionForTrainingSet,DumpROM,LoadROM,LoadTestInput,PredictionForTestSet
+    </Sequence>
+ <batchSize>50</batchSize>
+<WorkingDir>./ROM</WorkingDir>
+</RunInfo>
+
+
+
+<Files>
+    <Input name="rom_1" type="">rom_1.pk</Input>
+    <Input name="training_set">../training.csv</Input><!-- File that contains the training data set --> 
+     <Input name="test_set">../test.csv</Input> <!-- File that contains the test data set --> 
+</Files>
+
+<Steps>
+   <IOStep name="LoadTrainingInputOutput"> <!-- Read and save both the inputs (fls1, fls2, fls3 and grad) and 
+   the output which are the temperatures at different borehole depths(pointvalue1, ..., pointvalue44) of the training set to DataObjects -->
+      <Input class="Files" type="">training_set</Input>
+      <Output class="DataObjects" type="DataSet">training</Output>
+    </IOStep>
+    
+    <IOStep name="LoadTrainingInput"> <!-- Read and save only the inputs (fls1, fls2, fls3 and grad) of the training set to DataObjects -->
+      <Input class="Files" type="">training_set</Input>
+      <Output class="DataObjects" type="DataSet">training_input</Output>
+    </IOStep>
+    
+    <RomTrainer name="ConstructROM"> <!-- Construct ROM using the training data set -->
+      <Input class="DataObjects" type="DataSet">training</Input>
+      <Output class="Models" type="ROM">rom_1</Output>
+    </RomTrainer>  
+   
+  <MultiRun name="PredictionForTrainingSet">  <!--Predict the output using the input of the training set, using the ROM constructed from the last step-->
+      <Input class="DataObjects" type="PointSet">placeholder1</Input>
+      <Model class="Models" type="ROM">rom_1</Model>
+      <Sampler class="Samplers" type="CustomSampler">training</Sampler>
+      <Output class="DataObjects" type="PointSet">training_InputOutput</Output>
+      <Output class="OutStreams" type="Print">rom_on_training</Output> <!--Write out the input variables and predictions from the ROM for the training set-->
+  </MultiRun>
+  
+  <IOStep name="DumpROM"> <!--Save and output the constructed ROM-->
+        <Input class="Models" type="ROM">rom_1</Input>
+        <Output class="Files" type="">rom_1</Output>
+   </IOStep>
+   
+    <IOStep name="LoadROM"> <!--Load the ROM-->        
+      <Input class="Files" type="">rom_1</Input>
+      <Output class="Models" type="ROM">rom_test</Output>
+    </IOStep>
+    
+    <IOStep name="LoadTestInput"> <!-- Read and save only the inputs (fls1, fls2, fls3 and grad) of the test set to DataObjects -->
+      <Input class="Files" type="">test_set</Input>
+      <Output class="DataObjects" type="DataSet">test_input</Output>
+   </IOStep> 
+    
+   <MultiRun name="PredictionForTestSet"> <!--Predict the outputs (pointvalue1, ..., pointvalue44) using the inputs of the test set, using the ROM constructed before-->
+      <Input class="DataObjects" type="PointSet">placeholder2</Input>
+      <Model class='Models' type='ROM'>rom_test</Model>
+      <Sampler class="Samplers" type="CustomSampler">test</Sampler>
+      <Output class="DataObjects" type="PointSet">test_InputOutput</Output>
+      <Output class="OutStreams" type="Print">rom_on_test</Output>  <!--Write out the input variables and predictions from the ROM for the test set-->
+  </MultiRun>
+ </Steps>
+
+
+
+<DataObjects>
+ <PointSet name="placeholder1">
+      <Input>grad,fls1,fls2,fls3</Input>
+     <Output>OutputPlaceHolder</Output>
+  </PointSet>
+
+ <PointSet name="placeholder2">
+      <Input>grad,fls1,fls2,fls3</Input>
+      <Output>OutputPlaceHolder</Output>
+  </PointSet>
+
+  <PointSet name="training_input">
+      <Input>grad,fls1,fls2,fls3</Input>
+  </PointSet>
+ 
+  <PointSet name="test_input">
+      <Input>grad,fls1,fls2,fls3</Input>
+  </PointSet>
+  
+  <PointSet name="training">
+      <Input>grad,fls1,fls2,fls3</Input>
+      <Output>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,
+              pointvalue14,pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44</Output>
+  </PointSet>
+
+  <PointSet name="training_InputOutput">
+      <Input>grad,fls1,fls2,fls3</Input>
+      <Output>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,
+              pointvalue14,pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44</Output>
+  </PointSet> 
+
+  <PointSet name="test_InputOutput">
+      <Input>grad,fls1,fls2,fls3</Input>
+      <Output>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,
+              pointvalue14,pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44</Output>
+  </PointSet> 
+ 
+</DataObjects>
+
+<!--Generate samples from the saved the DataObjects, which are read from the training.csv and test.csv,
+ for training and testing the ROM. -->
+<Samplers>
+  <CustomSampler name="training">
+    <Source class="DataObjects" type="PointSet">training_input</Source>
+    <variable name="grad"/>
+    <variable name="fls1"/>
+    <variable name="fls2"/>
+    <variable name="fls3"/>
+  </CustomSampler>
+  
+  <CustomSampler name="test">
+    <Source class="DataObjects" type="PointSet">test_input</Source>
+    <variable name="grad"/>
+    <variable name="fls1"/>
+    <variable name="fls2"/>
+    <variable name="fls3"/>
+  </CustomSampler>
+</Samplers>
+
+
+<!--Construct ROM -->
+<Models>   
+  <ROM name="rom_1" subType="MLPRegressor">
+      <Features>grad,fls1,fls2,fls3</Features>
+        <Target>pointvalue1,pointvalue2,pointvalue3,pointvalue4,pointvalue5,pointvalue6,pointvalue7,pointvalue8,pointvalue9,pointvalue10,pointvalue11,pointvalue12,pointvalue13,
+              pointvalue14,pointvalue15,pointvalue16,pointvalue17,pointvalue18,pointvalue19,pointvalue20,pointvalue21,pointvalue22,pointvalue23,pointvalue24,pointvalue25
+              ,pointvalue26,pointvalue27,pointvalue28,pointvalue29,pointvalue30,pointvalue31,pointvalue32,pointvalue33,pointvalue34,pointvalue35,pointvalue36,pointvalue37
+              ,pointvalue38,pointvalue39,pointvalue40,pointvalue41,pointvalue42,pointvalue43,pointvalue44</Target>
+       <hidden_layer_sizes>60,60</hidden_layer_sizes>
+      <activation>relu</activation>
+      <solver>lbfgs</solver>
+      <alpha>0.001</alpha>
+      <batch_size>200</batch_size>
+      <learning_rate>adaptive</learning_rate>
+      <learning_rate_init>0.002</learning_rate_init>
+      <power_t>0.5</power_t>
+      <max_iter>100000</max_iter>
+      <shuffle>False</shuffle>
+      <random_state>1308</random_state>
+      <tol>1e-4</tol>
+      <verbose>False</verbose>
+      <warm_start>False</warm_start>
+      <momentum>0.9</momentum>
+      <nesterovs_momentum>True</nesterovs_momentum>
+      <early_stopping>False</early_stopping>
+      <validation_fraction>0.0</validation_fraction>
+      <beta_1>0.9</beta_1>
+      <beta_2>0.999</beta_2>
+      <epsilon>1e-8</epsilon>
+     <CV class="Models" type="PostProcessor">pp1</CV>
+  </ROM>
+  
+  <PostProcessor name="pp1" subType="CrossValidation">
+      <SciKitLearn>
+        <SKLtype>KFold</SKLtype>
+        <n_splits>10</n_splits>
+        <shuffle>False</shuffle>
+      </SciKitLearn>
+      <Metric class="Metrics" type="Metric">m1</Metric>
+  </PostProcessor> 
+ 
+  <ROM name="rom_test" subType="pickledROM">
+  </ROM>
+  
+</Models>
+
+<Metrics>
+    <Metric name="m1"  subType="SKL">
+      <metricType>regression|mean_absolute_error</metricType>
+    </Metric>
+  </Metrics>
+
+<OutStreams>
+    <Print name="rom_on_training">
+      <type>csv</type>
+      <source>training_InputOutput</source>
+    </Print>
+    <Print name="rom_on_test">
+      <type>csv</type>
+      <source>test_InputOutput</source>
+    </Print>
+</OutStreams>
+
+</Simulation>

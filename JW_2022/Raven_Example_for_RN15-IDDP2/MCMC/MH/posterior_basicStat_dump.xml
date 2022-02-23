@@ -1,0 +1,10 @@
+<DataObjectMetadata name="posterior_basicStat">
+  <DataSet type="Static">
+    <general>
+      <datasetName>posterior_basicStat</datasetName>
+      <outputs>mean_grad,sigma_grad,mean_fls1,sigma_fls1,mean_fls2,sigma_fls2,mean_fls3,sigma_fls3</outputs>
+      <sampleTag>RAVEN_sample_ID</sampleTag>
+    </general>
+  </DataSet>
+  
+</DataObjectMetadata>
